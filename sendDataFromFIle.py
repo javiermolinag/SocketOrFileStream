@@ -2,13 +2,13 @@ import sys
 import time
 import socket
 
-def getLines(inputFile, linesNumber, period, repeat):
-	with open(inputFile, "r") as file:
+def getLines_(inputFile, linesNumber, period, repeat, mode):
+	with open(inputFile, mode) as file:
 		actualLines = 0
 		startTime = time.time()
 		while(float(time.time() - startTime) < float(period)):
 			line = file.readline()
-
+			# 'repeat' mode or finish, also adds \n if line hasn't it
 			if not line:
 				if repeat == "True":
 					file.seek(0,0)
@@ -17,40 +17,64 @@ def getLines(inputFile, linesNumber, period, repeat):
 					break
 				continue
 			else:
-				if not line.endswith('\n'):
-					line = line + "\n"
+				if mode == "r" and not line.endswith('\n'):
+					line = line + '\n'
 				actualLines += 1
-
+			# do we ship all required lines?, if so please wait until the period is met
 			if actualLines == int(linesNumber):
 				print("    [*] Elapsed time in secs:",round(time.time() - startTime, 6), "-> lines:", actualLines)
+				time.sleep(float(period) - float(time.time() - startTime))
 				actualLines = 0
 				startTime = time.time()
-
 			yield line
 		else:
 			print("    [*] We can't send", linesNumber, "lines in", period, "secs, we just send", actualLines)
+
+def getLines(inputFile, linesNumber, period, repeat, mode):
+	print("    [*] Sending a single line each", float(period)/float(linesNumber), "secs")
+	with open(inputFile, mode) as file:
+		actualLines = 0
+		while(True):
+			line = file.readline()
+			if not line:
+				if repeat == "True":
+					file.seek(0,0)
+				else:
+					print("    [*] End of file -> lines:", actualLines)
+					break
+				continue
+			else:
+				if mode == "r" and not line.endswith('\n'):
+					line = line + '\n'
+				actualLines += 1
+			time.sleep(float(period)/float(linesNumber))
+			yield line
 
 def writeDataToFile(filename,line):
 	with open(filename, "a") as file:
 		file.write(line)
 
-def sendDataViaSocket(sckt,text):
-	sckt.send(line)
+def sendDataViaSocket(sc,line):
+	sc.send(line)
 
 def mainFile(typeProces, filename, inputFile, linesNumber, period, repeat):
 	print("[+] Process type:",typeProces)
-	lines = getLines(inputFile, linesNumber, period, repeat)
+	lines = getLines(inputFile, linesNumber, period, repeat, "r")
 	for line in lines:
 		writeDataToFile(filename,line)
-	
 
 def mainSocket(typeProces, IP, port, inputFile, linesNumber, period, repeat):
 	print("[+] Process type:",typeProces)
-	sckt = socket.socket()
-	sckt.connect((IP, port))
-	lines = getLines(inputFile, linesNumber, period, repeat)
+	#sckt = socket.socket()
+	#sckt.connect((IP, int(port)))
+	sckt = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+	sckt.bind((IP, int(port)))
+	sckt.listen(1)
+	sc, addr = sckt.accept()
+	lines = getLines(inputFile, linesNumber, period, repeat, "rb")
 	for line in lines:
-		sendDataViaSocket(sckt,line)
+		sendDataViaSocket(sc,line)
+
 
 def printUsage():
 	print("Usage: python sendDataFromFile.py [<socket> IP PORT | <file> FILENAME] filename number_lines period(secs) repeat")
