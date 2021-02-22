@@ -74,6 +74,9 @@ def mainSocket(typeProces, IP, port, inputFile, linesNumber, period, repeat):
 	lines = getLines(inputFile, linesNumber, period, repeat, "rb")
 	for line in lines:
 		sendDataViaSocket(sc,line)
+	else:
+		print('Closing socket')
+		sckt.close()
 
 
 def printUsage():
