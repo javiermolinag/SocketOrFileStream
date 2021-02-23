@@ -1,6 +1,7 @@
 import sys
 import time
 import socket
+import kafka
 
 def getLines_(inputFile, linesNumber, period, repeat, mode):
 	with open(inputFile, mode) as file:
@@ -57,6 +58,14 @@ def writeDataToFile(filename,line):
 def sendDataViaSocket(sc,line):
 	sc.send(line)
 
+def mainKafka(typeProces, IP, port, topic, inputFile, linesNumber, period, repeat):
+	print("[+] Process type:",typeProces)
+	producer = kafka.KafkaProducer(bootstrap_servers = [IP + ':' + port], value_serializer = lambda x: x.encode('utf-8'))
+	lines = getLines(inputFile, linesNumber, period, repeat, "r")
+	for line in lines:
+		sendVal = line[:-1] if line.endswith('\n') else line
+		producer.send(topic, value = sendVal)
+
 def mainFile(typeProces, filename, inputFile, linesNumber, period, repeat):
 	print("[+] Process type:",typeProces)
 	lines = getLines(inputFile, linesNumber, period, repeat, "r")
@@ -80,9 +89,10 @@ def mainSocket(typeProces, IP, port, inputFile, linesNumber, period, repeat):
 
 
 def printUsage():
-	print("Usage: python sendDataFromFile.py [<socket> IP PORT | <file> FILENAME] filename number_lines period(secs) repeat")
+	print("Usage: python sendDataFromFile.py [<socket> IP PORT | <file> FILENAME | <kafka> IP PORT TOPIC] filename number_lines period(secs) repeat")
 	print("Example for socket: python sendDataFromFile.py socket localhost 12345 input.txt 100 3 True")
 	print("Example for file: python sendDataFromFile.py file outputFIle.txt input.txt 500 2 False")
+	print("Example for kafka: python sendDataFromFile.py kafka localhost 9092 topic-name input.txt 500 3 False")
 
 
 if __name__ == '__main__':
@@ -92,6 +102,8 @@ if __name__ == '__main__':
 			mainSocket(*args)
 		elif args[0] == "file" and len(args) == 6:
 			mainFile(*args)
+		elif args[0] == "kafka" and len(args) == 8:
+			mainKafka(*args)
 		else:
 			printUsage()
 	else:
