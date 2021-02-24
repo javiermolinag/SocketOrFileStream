@@ -1,0 +1,32 @@
+{
+	"kafka":{
+		"ip":"localhost",
+		"port":"9092",
+		"topic":"rockthejvm",
+		"general":{
+			"input-file":"/home/javiermg/Documentos/pokemon.json",
+			"number_lines":"10",
+			"period":"2",
+			"repeat":"True"
+		}
+	},
+	"file":{
+		"name":"output.txt",
+		"general":{
+			"input-file":"/home/javiermg/Documentos/pokemon.csv",
+			"number_lines":"10",
+			"period":"2",
+			"repeat":"True"
+		}
+	},
+	"socket":{
+		"ip":"localhost",
+		"port":"12345",
+		"general":{
+			"input-file":"/home/javiermg/Documentos/pokemon.csv",
+			"number_lines":"10",
+			"period":"2",
+			"repeat":"True"
+		}
+	}
+}

@@ -1,7 +1,9 @@
 import sys
+import json
 import time
-import socket
 import kafka
+import socket
+
 
 def getLines_(inputFile, linesNumber, period, repeat, mode):
 	with open(inputFile, mode) as file:
@@ -87,6 +89,24 @@ def mainSocket(typeProces, IP, port, inputFile, linesNumber, period, repeat):
 		print('Closing socket')
 		sckt.close()
 
+def mainConfig(typeProces, subType):
+	conf = json.load(open("conf.json"))
+	try:
+		generalConf = conf[subType]["general"]
+	except:
+		print("Subtype",subType,"does not exist")
+		exit()
+	generalParams = [generalConf["input-file"],generalConf["number_lines"],generalConf["period"],generalConf["repeat"]]
+	if subType == "kafka":
+		params = [subType] + [conf[subType]["ip"],conf[subType]["port"],conf[subType]["topic"]] + generalParams
+		mainKafka(*params)
+	elif subType == "socket":
+		params = [subType] + [conf[subType]["ip"],conf[subType]["port"]] + generalParams
+		mainSocket(*params)
+	elif subType == "file":
+		params = [subType] + [conf[subType]["name"]] + generalParams
+		mainFile(*params)
+
 
 def printUsage():
 	print("Usage: python sendDataFromFile.py [<socket> IP PORT | <file> FILENAME | <kafka> IP PORT TOPIC] filename number_lines period(secs) repeat")
@@ -104,6 +124,8 @@ if __name__ == '__main__':
 			mainFile(*args)
 		elif args[0] == "kafka" and len(args) == 8:
 			mainKafka(*args)
+		elif args[0] == "config" and len(args) == 2:
+			mainConfig(*args)
 		else:
 			printUsage()
 	else:
